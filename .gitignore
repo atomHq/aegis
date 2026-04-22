@@ -1,0 +1,40 @@
+# Binaries
+aegis
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+/bin/
+/dist/
+
+# Environment & secrets (CRITICAL — contains MASTER_KEY, JWT_SECRET)
+.env
+.env.local
+.env.*.local
+
+# Go
+vendor/
+*.test
+*.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+*.tmp
+*.log
