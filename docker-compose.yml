@@ -5,15 +5,15 @@ services:
     image: postgres:16-alpine
     container_name: aegis-postgres
     environment:
-      POSTGRES_USER: aegis
-      POSTGRES_PASSWORD: aegis
-      POSTGRES_DB: aegis
+      POSTGRES_USER: ${DB_USER:-aegis}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aegis}
+      POSTGRES_DB: ${DB_NAME:-aegis}
     ports:
       - "5432:5432"
     volumes:
       - aegis_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aegis} -d ${DB_NAME:-aegis}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,16 +24,23 @@ services:
       dockerfile: Dockerfile
     container_name: aegis-app
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:${PORT:-8080}"
     environment:
-      PORT: 8080
-      ENV: development
-      DATABASE_URL: postgres://aegis:aegis@postgres:5432/aegis?sslmode=disable
-      DB_MAX_CONNS: 25
-      DB_MIN_CONNS: 5
+      PORT: ${PORT:-8080}
+      ENV: ${ENV:-development}
+      DATABASE_URL: postgres://${DB_USER:-aegis}:${DB_PASSWORD:-aegis}@postgres:5432/${DB_NAME:-aegis}?sslmode=disable
+      DB_MAX_CONNS: ${DB_MAX_CONNS:-25}
+      DB_MIN_CONNS: ${DB_MIN_CONNS:-5}
       MASTER_KEY: ${MASTER_KEY}
-      DEFAULT_RATE_LIMIT: 60
-      LOG_LEVEL: debug
+      JWT_SECRET: ${JWT_SECRET}
+      DEFAULT_RATE_LIMIT: ${DEFAULT_RATE_LIMIT:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-noreply@aegis.dev}
     depends_on:
       postgres:
         condition: service_healthy
