@@ -48,6 +48,19 @@ func (h *APIKeyHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// H5 Security: When creating keys via JWT (dashboard), enforce a scope ceiling.
+	// Dashboard users cannot grant api_keys:manage (prevents privilege escalation loop)
+	// or secrets:admin (delete). Only the admin key from signup has these.
+	if claims := middleware.UserFromContext(r.Context()); claims != nil {
+		for _, scope := range input.Scopes {
+			if scope == "api_keys:manage" || scope == "secrets:admin" {
+				apierror.WriteError(w, reqID, apierror.Forbidden(
+					"scope '"+scope+"' cannot be granted via dashboard — use the admin API key"))
+				return
+			}
+		}
+	}
+
 	result, err := h.svc.Create(r.Context(), tenant.ID, &input)
 	if err != nil {
 		apierror.WriteError(w, reqID, &apierror.APIError{Code: "KEY_CREATE_FAILED", Message: err.Error(), Status: http.StatusBadRequest})

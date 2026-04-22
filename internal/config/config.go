@@ -27,6 +27,10 @@ type Config struct {
 	// CORS
 	CORSOrigins string `mapstructure:"CORS_ORIGINS"` // Comma-separated list of allowed origins
 
+	// Trusted Proxies — comma-separated CIDRs (e.g. "127.0.0.1/32,10.0.0.0/8")
+	// Only requests from these IPs will have X-Forwarded-For honoured.
+	TrustedProxies string `mapstructure:"TRUSTED_PROXIES"`
+
 	// SMTP (optional in development — verification codes logged to console)
 	SMTPHost string `mapstructure:"SMTP_HOST"`
 	SMTPPort int    `mapstructure:"SMTP_PORT"`

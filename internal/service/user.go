@@ -54,19 +54,19 @@ func (s *UserService) Signup(ctx context.Context, input *domain.SignupInput) (*S
 	// Check if email already exists
 	existing, err := s.userRepo.GetByEmail(ctx, strings.ToLower(input.Email))
 	if err != nil {
-		return nil, fmt.Errorf("failed to check email: %w", err)
+		return nil, fmt.Errorf("signup failed, please try again")
 	}
 	if existing != nil {
-		return nil, fmt.Errorf("email already registered")
+		return nil, fmt.Errorf("signup failed, please try again or contact support")
 	}
 
 	// Check if tenant slug already exists
 	existingTenant, err := s.tenantRepo.GetBySlug(ctx, input.OrgSlug)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check slug: %w", err)
+		return nil, fmt.Errorf("signup failed, please try again")
 	}
 	if existingTenant != nil {
-		return nil, fmt.Errorf("organization slug '%s' already taken", input.OrgSlug)
+		return nil, fmt.Errorf("signup failed, please try again or contact support")
 	}
 
 	// Hash password

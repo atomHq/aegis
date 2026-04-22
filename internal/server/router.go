@@ -47,12 +47,13 @@ func NewRouter(
 
 		// ──────────────────────────────────────────────
 		// Public auth routes (no authentication)
+		// Rate-limited by IP to prevent brute-force
 		// ──────────────────────────────────────────────
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/signup", authHandler.Signup)
-			r.Post("/login", authHandler.Login)
-			r.Post("/verify-email", authHandler.VerifyEmail)
-			r.Post("/resend-verification", authHandler.ResendVerification)
+			r.With(rateLimiter.IPRateLimit(5)).Post("/signup", authHandler.Signup)
+			r.With(rateLimiter.IPRateLimit(10)).Post("/login", authHandler.Login)
+			r.With(rateLimiter.IPRateLimit(10)).Post("/verify-email", authHandler.VerifyEmail)
+			r.With(rateLimiter.IPRateLimit(5)).Post("/resend-verification", authHandler.ResendVerification)
 		})
 
 		// ──────────────────────────────────────────────

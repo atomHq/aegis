@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/oluwasemilore/aegis/internal/domain"
 	"github.com/oluwasemilore/aegis/internal/pkg/apierror"
 	"github.com/oluwasemilore/aegis/internal/service"
@@ -93,4 +95,41 @@ func RequireScope(scope string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// RequireProjectAccess returns middleware that enforces API key project_ids scoping.
+// If the API key has ProjectIDs set, the request's project ID (from chi URL param "id")
+// must be in that list. Keys with empty ProjectIDs have access to all projects.
+func RequireProjectAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		apiKey := APIKeyFromContext(r.Context())
+		// Skip check if no API key (JWT-authed) or no project restriction
+		if apiKey == nil || len(apiKey.ProjectIDs) == 0 {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		projectIDStr := chi.URLParam(r, "id")
+		if projectIDStr == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		projectID, err := uuid.Parse(projectIDStr)
+		if err != nil {
+			reqID := r.Header.Get("X-Request-ID")
+			apierror.WriteError(w, reqID, apierror.ValidationError("invalid project ID"))
+			return
+		}
+
+		for _, allowed := range apiKey.ProjectIDs {
+			if allowed == projectID {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		reqID := r.Header.Get("X-Request-ID")
+		apierror.WriteError(w, reqID, apierror.Forbidden("API key does not have access to this project"))
+	})
 }

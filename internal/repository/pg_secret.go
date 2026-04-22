@@ -28,8 +28,8 @@ func (r *PgSecretRepository) Upsert(ctx context.Context, secret *domain.Secret) 
 
 	var maxVersion int
 	err = tx.QueryRow(ctx,
-		`SELECT COALESCE(MAX(version), 0) FROM secrets WHERE project_id = $1 AND key = $2`,
-		secret.ProjectID, secret.Key,
+		`SELECT COALESCE(MAX(version), 0) FROM secrets WHERE tenant_id = $1 AND project_id = $2 AND key = $3`,
+		secret.TenantID, secret.ProjectID, secret.Key,
 	).Scan(&maxVersion)
 	if err != nil {
 		return fmt.Errorf("failed to get max version: %w", err)

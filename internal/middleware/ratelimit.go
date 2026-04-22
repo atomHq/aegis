@@ -98,7 +98,7 @@ func (rl *RateLimiter) getBucket(tenantID string, ratePerMin int) *tokenBucket {
 	return bucket
 }
 
-// Middleware returns the rate limiting middleware.
+// Middleware returns the tenant-based rate limiting middleware.
 func (rl *RateLimiter) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +109,26 @@ func (rl *RateLimiter) Middleware() func(http.Handler) http.Handler {
 			}
 
 			bucket := rl.getBucket(tenant.ID.String(), tenant.RateLimitPerMin)
+			if !bucket.allow() {
+				reqID := r.Header.Get("X-Request-ID")
+				w.Header().Set("Retry-After", "1")
+				apierror.WriteError(w, reqID, apierror.RateLimited())
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// IPRateLimit returns middleware that rate-limits by client IP address.
+// Designed for unauthenticated public routes (login, signup, verify-email).
+func (rl *RateLimiter) IPRateLimit(ratePerMin int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Use "ip:" prefix to avoid collision with tenant-keyed buckets
+			key := "ip:" + r.RemoteAddr
+			bucket := rl.getBucket(key, ratePerMin)
 			if !bucket.allow() {
 				reqID := r.Header.Get("X-Request-ID")
 				w.Header().Set("Retry-After", "1")

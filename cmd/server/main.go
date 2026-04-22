@@ -35,6 +35,19 @@ func main() {
 
 	log.Info().Str("env", cfg.Env).Int("port", cfg.Port).Msg("starting aegis")
 
+	// Configure trusted proxies for X-Forwarded-For handling
+	if cfg.TrustedProxies != "" {
+		var proxies []string
+		for _, p := range strings.Split(cfg.TrustedProxies, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				proxies = append(proxies, p)
+			}
+		}
+		middleware.SetTrustedProxies(proxies)
+		log.Info().Strs("proxies", proxies).Msg("trusted proxies configured")
+	}
+
 	// Connect to database
 	pool, err := connectDB(cfg)
 	if err != nil {
