@@ -247,6 +247,14 @@ func (s *UserService) VerifyEmail(ctx context.Context, input *domain.VerifyEmail
 	}
 
 	user.IsVerified = true
+
+	// Send welcome email (outside critical path — best effort)
+	go func() {
+		if err := s.emailSvc.SendWelcome(email, user.FirstName, "https://aegis.dev/dashboard"); err != nil {
+			log.Error().Err(err).Str("email", email).Msg("failed to send welcome email")
+		}
+	}()
+
 	return user, nil
 }
 

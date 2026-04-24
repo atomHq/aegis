@@ -1,0 +1,67 @@
+{{define "content"}}
+<!-- Greeting -->
+<p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #E5E5EA;">
+  Hi <span style="color: #F5F5F7; font-weight: 600;">{{.FirstName}}</span>,
+</p>
+
+<!-- Main message -->
+<p style="margin: 0 0 8px; font-size: 15px; line-height: 24px; color: #A1A1AA;">
+  Welcome to Aegis! To get started, verify your email address by entering the code below:
+</p>
+
+<!-- Verification code block -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 28px 0;">
+  <tr>
+    <td align="center">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td class="code-block" style="background-color: #1A1A24; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; padding: 20px 40px; text-align: center;">
+            <span style="font-size: 36px; font-weight: 700; letter-spacing: 10px; color: #8B5CF6; font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;">{{.Code}}</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Expiry notice -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 28px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="background-color: rgba(139, 92, 246, 0.08); border-radius: 8px; padding: 10px 16px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="font-size: 14px; color: #A78BFA; vertical-align: middle; padding-right: 6px;">&#9202;</td>
+                <td style="font-size: 13px; color: #A78BFA; font-weight: 500;">This code expires in <strong style="color: #C4B5FD;">15 minutes</strong></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Security divider -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+  <tr>
+    <td style="border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 24px;">
+      <!-- Security notice -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td style="background-color: rgba(255, 255, 255, 0.03); border-radius: 8px; padding: 16px;">
+            <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6B6B80; text-transform: uppercase; letter-spacing: 0.5px;">
+              🔒 Security Notice
+            </p>
+            <p style="margin: 0; font-size: 13px; line-height: 20px; color: #6B6B80;">
+              If you didn't create an Aegis account, you can safely ignore this email. No action is required on your part.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{{end}}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aegis Email Template Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0F; color: #F5F5F7; min-height: 100vh; }
+    .preview-nav { position: sticky; top: 0; z-index: 10; background: #13131A; border-bottom: 1px solid rgba(139,92,246,0.15); padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+    .preview-nav h1 { font-size: 16px; color: #8B5CF6; font-weight: 700; }
+    .preview-nav button { padding: 8px 20px; border-radius: 8px; border: 1px solid rgba(139,92,246,0.3); background: transparent; color: #A78BFA; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .preview-nav button.active, .preview-nav button:hover { background: rgba(139,92,246,0.15); color: #C4B5FD; border-color: #8B5CF6; }
+    .preview-container { max-width: 640px; margin: 40px auto; padding: 0 16px; }
+    .label { font-size: 11px; color: #6B6B80; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    iframe { width: 100%; border: 1px solid rgba(139,92,246,0.1); border-radius: 12px; background: #0A0A0F; }
+  </style>
+</head>
+<body>
+  <div class="preview-nav">
+    <h1>📧 Email Preview</h1>
+    <button class="active" onclick="show('verification')">Verification</button>
+    <button onclick="show('welcome')">Welcome</button>
+  </div>
+  <div class="preview-container">
+    <p class="label">Preview</p>
+    <iframe id="preview" style="height: 800px;" srcdoc=""></iframe>
+  </div>
+  <script>
+    const templates = {};
+    function show(name) {
+      document.getElementById('preview').srcdoc = templates[name] || '';
+      document.querySelectorAll('.preview-nav button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // Load templates
+    fetch('/preview/verification').then(r => r.text()).then(html => { templates.verification = html; show('verification'); });
+    fetch('/preview/welcome').then(r => r.text()).then(html => { templates.welcome = html; });
+  </script>
+</body>
+</html>

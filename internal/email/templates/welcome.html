@@ -1,0 +1,102 @@
+{{define "content"}}
+<!-- Greeting -->
+<p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #E5E5EA;">
+  Hi <span style="color: #F5F5F7; font-weight: 600;">{{.FirstName}}</span>,
+</p>
+
+<!-- Main message -->
+<p style="margin: 0 0 20px; font-size: 15px; line-height: 24px; color: #A1A1AA;">
+  Your email has been verified. Welcome to <span style="color: #8B5CF6; font-weight: 600;">Aegis</span> — your secrets management platform.
+</p>
+
+<!-- Feature highlights -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 28px;">
+
+  <!-- Feature 1 -->
+  <tr>
+    <td style="padding: 12px 16px; background-color: rgba(139, 92, 246, 0.06); border-radius: 10px; margin-bottom: 8px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td width="36" valign="top" style="padding-right: 12px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.2)); border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px;">🔐</div>
+          </td>
+          <td valign="top">
+            <p style="margin: 0 0 2px; font-size: 14px; font-weight: 600; color: #E5E5EA;">Envelope Encryption</p>
+            <p style="margin: 0; font-size: 13px; line-height: 18px; color: #6B6B80;">Your secrets are encrypted with industry-standard AES-256-GCM.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Spacer -->
+  <tr><td style="height: 8px;"></td></tr>
+
+  <!-- Feature 2 -->
+  <tr>
+    <td style="padding: 12px 16px; background-color: rgba(139, 92, 246, 0.06); border-radius: 10px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td width="36" valign="top" style="padding-right: 12px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.2)); border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px;">🔑</div>
+          </td>
+          <td valign="top">
+            <p style="margin: 0 0 2px; font-size: 14px; font-weight: 600; color: #E5E5EA;">Scoped API Keys</p>
+            <p style="margin: 0; font-size: 13px; line-height: 18px; color: #6B6B80;">Fine-grained access control with role-based permissions.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Spacer -->
+  <tr><td style="height: 8px;"></td></tr>
+
+  <!-- Feature 3 -->
+  <tr>
+    <td style="padding: 12px 16px; background-color: rgba(139, 92, 246, 0.06); border-radius: 10px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td width="36" valign="top" style="padding-right: 12px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.2)); border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px;">📋</div>
+          </td>
+          <td valign="top">
+            <p style="margin: 0 0 2px; font-size: 14px; font-weight: 600; color: #E5E5EA;">Audit Trail</p>
+            <p style="margin: 0; font-size: 13px; line-height: 18px; color: #6B6B80;">Immutable logs for every action taken on your secrets.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- CTA Button -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 28px;">
+  <tr>
+    <td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{.DashboardURL}}" style="height:44px;v-text-anchor:middle;width:200px;" arcsize="25%" strokecolor="#7C3AED" fillcolor="#7C3AED">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">Open Dashboard →</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <a href="{{.DashboardURL}}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 32px; border-radius: 10px; letter-spacing: 0.2px;">
+        Open Dashboard &rarr;
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<!-- Divider -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+  <tr>
+    <td style="border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 20px;">
+      <p style="margin: 0; font-size: 13px; line-height: 20px; color: #6B6B80;">
+        Your admin API key was included in your signup response. If you haven't stored it yet, you can generate a new one from the dashboard.
+      </p>
+    </td>
+  </tr>
+</table>
+{{end}}
