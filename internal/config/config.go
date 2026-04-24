@@ -45,6 +45,20 @@ func Load() (*Config, error) {
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
 
+	// Explicitly bind environment variables so they work with Unmarshal().
+	// viper.AutomaticEnv() only works with viper.Get() — not Unmarshal().
+	for _, key := range []string{
+		"PORT", "ENV", "DATABASE_URL",
+		"DB_USER", "DB_PASSWORD", "DB_NAME",
+		"DB_MAX_CONNS", "DB_MIN_CONNS",
+		"MASTER_KEY", "JWT_SECRET",
+		"DEFAULT_RATE_LIMIT", "LOG_LEVEL",
+		"CORS_ORIGINS", "TRUSTED_PROXIES",
+		"SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM",
+	} {
+		_ = viper.BindEnv(key)
+	}
+
 	// Set defaults
 	viper.SetDefault("PORT", 8080)
 	viper.SetDefault("ENV", "development")
