@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -133,6 +134,8 @@ func connectDB(cfg *config.Config) (*pgxpool.Pool, error) {
 
 	poolCfg.MaxConns = cfg.DBMaxConns
 	poolCfg.MinConns = cfg.DBMinConns
+
+	poolCfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
