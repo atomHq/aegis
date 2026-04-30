@@ -10,6 +10,7 @@ import (
 	"github.com/oluwasemilore/aegis/internal/domain"
 	"github.com/oluwasemilore/aegis/internal/middleware"
 	"github.com/oluwasemilore/aegis/internal/pkg/apierror"
+	"github.com/oluwasemilore/aegis/internal/pkg/envparse"
 	"github.com/oluwasemilore/aegis/internal/pkg/pagination"
 	"github.com/oluwasemilore/aegis/internal/pkg/validator"
 	"github.com/oluwasemilore/aegis/internal/service"
@@ -341,4 +342,116 @@ func (h *SecretHandler) BulkPut(w http.ResponseWriter, r *http.Request) {
 		map[string]interface{}{"keys": keys, "count": len(result)})
 
 	apierror.WriteSuccess(w, reqID, items, http.StatusOK)
+}
+
+// Import handles POST /api/v1/projects/{id}/secrets/import.
+// Accepts either raw .env content or a flat JSON key-value map.
+//
+// For .env format:
+//
+//	{"format": "env", "content": "KEY1=value1\nKEY2=value2"}
+//
+// For JSON format:
+//
+//	{"format": "json", "content": {"KEY1": "value1", "KEY2": "value2"}}
+func (h *SecretHandler) Import(w http.ResponseWriter, r *http.Request) {
+	reqID := r.Header.Get("X-Request-ID")
+	tenant := middleware.TenantFromContext(r.Context())
+	if tenant == nil {
+		apierror.WriteError(w, reqID, apierror.Unauthorized("no tenant context"))
+		return
+	}
+
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		apierror.WriteError(w, reqID, apierror.ValidationError("invalid project ID"))
+		return
+	}
+
+	// Decode the raw JSON to handle the polymorphic "content" field
+	var raw struct {
+		Format  string          `json:"format"`
+		Content json.RawMessage `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+		apierror.WriteError(w, reqID, apierror.ValidationError("invalid request body"))
+		return
+	}
+
+	var secrets map[string]string
+
+	switch raw.Format {
+	case "env":
+		// Content is a JSON string containing raw .env file content
+		var envContent string
+		if err := json.Unmarshal(raw.Content, &envContent); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("content must be a string for env format"))
+			return
+		}
+		secrets, err = envparse.Parse(envContent)
+		if err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("failed to parse env content: "+err.Error()))
+			return
+		}
+
+	case "json":
+		// Content is a flat JSON object {"KEY": "VALUE"}
+		if err := json.Unmarshal(raw.Content, &secrets); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("content must be a flat JSON object for json format"))
+			return
+		}
+
+	default:
+		apierror.WriteError(w, reqID, apierror.ValidationError("format must be 'env' or 'json'"))
+		return
+	}
+
+	if len(secrets) == 0 {
+		apierror.WriteError(w, reqID, apierror.ValidationError("no secrets found in content"))
+		return
+	}
+	if len(secrets) > 100 {
+		apierror.WriteError(w, reqID, apierror.ValidationError("import limited to 100 secrets per request"))
+		return
+	}
+
+	// Validate all keys and values, convert to BulkPutSecretsInput
+	input := &domain.BulkPutSecretsInput{
+		Secrets: make([]domain.PutSecretInput, 0, len(secrets)),
+	}
+	for key, value := range secrets {
+		if err := validator.ValidateSecretKey(key); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("key '"+key+"': "+err.Error()))
+			return
+		}
+		if err := validator.ValidateSecretValue(value); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("value for key '"+key+"': "+err.Error()))
+			return
+		}
+		input.Secrets = append(input.Secrets, domain.PutSecretInput{Key: key, Value: value})
+	}
+
+	actor := h.getActor(r)
+	result, err := h.svc.BulkPut(r.Context(), tenant.ID, projectID, input, actor)
+	if err != nil {
+		apierror.WriteError(w, reqID, &apierror.APIError{Code: "SECRET_IMPORT_FAILED", Message: err.Error(), Status: http.StatusBadRequest})
+		return
+	}
+
+	keys := make([]string, 0, len(result))
+	items := make([]map[string]interface{}, 0, len(result))
+	for _, res := range result {
+		keys = append(keys, res.Key)
+		items = append(items, map[string]interface{}{
+			"id": res.ID, "key": res.Key, "version": res.Version, "created_at": res.CreatedAt,
+		})
+	}
+
+	h.auditSvc.Log(r.Context(), tenant.ID, actor, domain.AuditActionSecretBulkCreate, "secret", nil, r.RemoteAddr,
+		map[string]interface{}{"keys": keys, "count": len(result), "source": "import"})
+
+	apierror.WriteSuccess(w, reqID, map[string]interface{}{
+		"imported": len(items),
+		"secrets": items,
+	}, http.StatusOK)
 }

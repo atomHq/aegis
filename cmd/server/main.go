@@ -135,6 +135,7 @@ func connectDB(cfg *config.Config) (*pgxpool.Pool, error) {
 	poolCfg.MaxConns = cfg.DBMaxConns
 	poolCfg.MinConns = cfg.DBMinConns
 
+	// Use SimpleProtocol
 	poolCfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
