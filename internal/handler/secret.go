@@ -283,3 +283,62 @@ func (h *SecretHandler) BulkGet(w http.ResponseWriter, r *http.Request) {
 
 	apierror.WriteSuccess(w, reqID, result, http.StatusOK)
 }
+
+// BulkPut handles PUT /api/v1/projects/{id}/secrets/bulk.
+func (h *SecretHandler) BulkPut(w http.ResponseWriter, r *http.Request) {
+	reqID := r.Header.Get("X-Request-ID")
+	tenant := middleware.TenantFromContext(r.Context())
+	if tenant == nil {
+		apierror.WriteError(w, reqID, apierror.Unauthorized("no tenant context"))
+		return
+	}
+
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		apierror.WriteError(w, reqID, apierror.ValidationError("invalid project ID"))
+		return
+	}
+
+	var input domain.BulkPutSecretsInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		apierror.WriteError(w, reqID, apierror.ValidationError("invalid request body"))
+		return
+	}
+
+	if len(input.Secrets) == 0 || len(input.Secrets) > 50 {
+		apierror.WriteError(w, reqID, apierror.ValidationError("secrets must contain 1-50 items"))
+		return
+	}
+
+	for _, sec := range input.Secrets {
+		if err := validator.ValidateSecretKey(sec.Key); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("key '"+sec.Key+"': "+err.Error()))
+			return
+		}
+		if err := validator.ValidateSecretValue(sec.Value); err != nil {
+			apierror.WriteError(w, reqID, apierror.ValidationError("value for key '"+sec.Key+"': "+err.Error()))
+			return
+		}
+	}
+
+	actor := h.getActor(r)
+	result, err := h.svc.BulkPut(r.Context(), tenant.ID, projectID, &input, actor)
+	if err != nil {
+		apierror.WriteError(w, reqID, &apierror.APIError{Code: "SECRET_BULK_WRITE_FAILED", Message: err.Error(), Status: http.StatusBadRequest})
+		return
+	}
+
+	keys := make([]string, 0, len(result))
+	items := make([]map[string]interface{}, 0, len(result))
+	for _, res := range result {
+		keys = append(keys, res.Key)
+		items = append(items, map[string]interface{}{
+			"id": res.ID, "key": res.Key, "version": res.Version, "created_at": res.CreatedAt,
+		})
+	}
+
+	h.auditSvc.Log(r.Context(), tenant.ID, actor, domain.AuditActionSecretBulkCreate, "secret", nil, r.RemoteAddr,
+		map[string]interface{}{"keys": keys, "count": len(result)})
+
+	apierror.WriteSuccess(w, reqID, items, http.StatusOK)
+}

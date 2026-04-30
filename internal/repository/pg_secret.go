@@ -160,3 +160,49 @@ func (r *PgSecretRepository) scanRows(rows pgx.Rows) ([]*domain.Secret, error) {
 	}
 	return secrets, nil
 }
+
+func (r *PgSecretRepository) BulkUpsert(ctx context.Context, secrets []*domain.Secret) error {
+	if len(secrets) == 0 {
+		return nil
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now().UTC()
+
+	for _, secret := range secrets {
+		var maxVersion int
+		err = tx.QueryRow(ctx,
+			`SELECT COALESCE(MAX(version), 0) FROM secrets WHERE tenant_id = $1 AND project_id = $2 AND key = $3`,
+			secret.TenantID, secret.ProjectID, secret.Key,
+		).Scan(&maxVersion)
+		if err != nil {
+			return fmt.Errorf("failed to get max version for key %s: %w", secret.Key, err)
+		}
+
+		secret.Version = maxVersion + 1
+		secret.CreatedAt = now
+		secret.UpdatedAt = now
+		if secret.ID == uuid.Nil {
+			secret.ID = uuid.New()
+		}
+
+		_, err = tx.Exec(ctx, `
+			INSERT INTO secrets (id, tenant_id, project_id, key, encrypted_value, encrypted_dek, nonce, dek_nonce, version, is_active, expires_at, tags, created_by, updated_by, created_at, updated_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+			secret.ID, secret.TenantID, secret.ProjectID, secret.Key,
+			secret.EncryptedValue, secret.EncryptedDEK, secret.Nonce, secret.DEKNonce,
+			secret.Version, true, secret.ExpiresAt, secret.Tags,
+			secret.CreatedBy, secret.UpdatedBy, secret.CreatedAt, secret.UpdatedAt,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert secret %s: %w", secret.Key, err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}

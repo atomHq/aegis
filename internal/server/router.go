@@ -109,6 +109,7 @@ func NewRouter(
 					r.Route("/secrets", func(r chi.Router) {
 						r.With(middleware.RequireScope("secrets:read")).Get("/", secretHandler.ListKeys)
 						r.With(middleware.RequireScope("secrets:write")).Put("/", secretHandler.Put)
+						r.With(middleware.RequireScope("secrets:write")).Put("/bulk", secretHandler.BulkPut)
 						r.With(middleware.RequireScope("secrets:read")).Post("/bulk", secretHandler.BulkGet)
 
 						r.Route("/{key}", func(r chi.Router) {

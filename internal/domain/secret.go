@@ -48,6 +48,11 @@ type BulkGetSecretsInput struct {
 	Keys []string `json:"keys" validate:"required,min=1,max=50,dive,min=1,max=255"`
 }
 
+// BulkPutSecretsInput holds the input for bulk secret insertion.
+type BulkPutSecretsInput struct {
+	Secrets []PutSecretInput `json:"secrets" validate:"required,min=1,max=50,dive"`
+}
+
 // SecretRepository defines the interface for secret data access.
 type SecretRepository interface {
 	Upsert(ctx context.Context, secret *Secret) error
@@ -58,4 +63,5 @@ type SecretRepository interface {
 	SoftDelete(ctx context.Context, tenantID, projectID uuid.UUID, key string) error
 	CountByTenant(ctx context.Context, tenantID uuid.UUID) (int, error)
 	GetBulk(ctx context.Context, tenantID, projectID uuid.UUID, keys []string) ([]*Secret, error)
+	BulkUpsert(ctx context.Context, secrets []*Secret) error
 }

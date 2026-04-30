@@ -27,6 +27,7 @@ const (
 	AuditActionSecretUpdate = "secret.update"
 	AuditActionSecretDelete = "secret.delete"
 	AuditActionSecretBulk   = "secret.bulk_read"
+	AuditActionSecretBulkCreate = "secret.bulk_create"
 
 	AuditActionProjectCreate = "project.create"
 	AuditActionProjectUpdate = "project.update"
