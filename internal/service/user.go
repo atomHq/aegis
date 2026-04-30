@@ -177,39 +177,49 @@ func (s *UserService) Login(ctx context.Context, input *domain.LoginInput) (stri
 	email := strings.ToLower(input.Email)
 	user, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
+		log.Error().Err(err).Str("email", email).Msg("failed to fetch user during login")
 		return "", nil, fmt.Errorf("authentication failed")
 	}
 	if user == nil {
+		log.Warn().Str("email", email).Msg("login failed: user not found")
 		return "", nil, fmt.Errorf("invalid email or password")
 	}
 
 	if !user.IsActive {
+		log.Warn().Str("user_id", user.ID.String()).Str("email", email).Msg("login failed: inactive user")
 		return "", nil, fmt.Errorf("account is deactivated")
 	}
 
 	if err := crypto.CheckPassword(input.Password, user.PasswordHash); err != nil {
+		log.Warn().Str("user_id", user.ID.String()).Str("email", email).Msg("login failed: invalid password")
 		return "", nil, fmt.Errorf("invalid email or password")
 	}
 
 	if !user.IsVerified {
+		log.Warn().Str("user_id", user.ID.String()).Str("email", email).Msg("login failed: email not verified")
 		return "", nil, fmt.Errorf("email not verified, please check your inbox")
 	}
 
 	if user.TenantID == nil {
+		log.Error().Str("user_id", user.ID.String()).Str("email", email).Msg("login failed: user has no tenant")
 		return "", nil, fmt.Errorf("no organization associated")
 	}
 
 	// Generate JWT
 	token, err := crypto.GenerateToken(user.ID, *user.TenantID, user.Email, s.jwtSecret)
 	if err != nil {
+		log.Error().Err(err).Str("user_id", user.ID.String()).Str("tenant_id", user.TenantID.String()).Str("email", email).Msg("failed to generate login token")
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
 	// Update last login (fire and forget)
 	go func() {
-		_ = s.userRepo.UpdateLastLogin(context.Background(), user.ID)
+		if err := s.userRepo.UpdateLastLogin(context.Background(), user.ID); err != nil {
+			log.Error().Err(err).Str("user_id", user.ID.String()).Str("email", email).Msg("failed to update last login")
+		}
 	}()
 
+	log.Info().Str("user_id", user.ID.String()).Str("tenant_id", user.TenantID.String()).Str("email", email).Msg("user authenticated")
 	return token, user, nil
 }
 
